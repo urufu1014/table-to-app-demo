@@ -1,0 +1,53 @@
+{
+  "name": "table-to-app-demo",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "点検案件管理のWebアプリ化 - 架空データによる模擬納品事例",
+  "scripts": {
+    "dev": "node node_modules/next/dist/bin/next dev",
+    "build": "node node_modules/next/dist/bin/next build",
+    "start": "node node_modules/next/dist/bin/next start",
+    "lint": "node node_modules/eslint/bin/eslint.js .",
+    "typecheck": "node node_modules/typescript/bin/tsc --noEmit",
+    "test": "node --test tests/unit/*.test.ts tests/db/*.test.ts",
+    "test:integration": "node --test tests/integration/*.test.ts",
+    "test:watch": "node --watch --test tests/unit/*.test.ts tests/db/*.test.ts",
+    "test:e2e": "node node_modules/@playwright/test/cli.js test",
+    "supabase:start": "node node_modules/supabase/dist/supabase.js start",
+    "supabase:stop": "node node_modules/supabase/dist/supabase.js stop",
+    "supabase:reset": "node node_modules/supabase/dist/supabase.js db reset",
+    "supabase:types": "node node_modules/supabase/dist/supabase.js gen types typescript --local > lib/database.types.ts",
+    "seed:demo": "node scripts/seed-demo.mjs"
+  },
+  "dependencies": {
+    "@supabase/ssr": "latest",
+    "@supabase/supabase-js": "latest",
+    "clsx": "latest",
+    "lucide-react": "latest",
+    "next": "latest",
+    "papaparse": "latest",
+    "react": "latest",
+    "react-dom": "latest",
+    "tailwind-merge": "latest",
+    "zod": "latest",
+    "zustand": "latest"
+  },
+  "devDependencies": {
+    "@playwright/test": "latest",
+    "@tailwindcss/postcss": "latest",
+    "@testing-library/jest-dom": "latest",
+    "@testing-library/react": "latest",
+    "@types/node": "latest",
+    "@types/papaparse": "latest",
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "eslint": "latest",
+    "eslint-config-next": "latest",
+    "jsdom": "^26.1.0",
+    "supabase": "latest",
+    "tailwindcss": "latest",
+    "typescript": "latest",
+    "vitest": "latest"
+  }
+}

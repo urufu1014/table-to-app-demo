@@ -1,0 +1,12 @@
+job_no,customer_code,customer_name,site_name,postal_code,address,inspection_type,assignee_email,scheduled_date,report_due_date,status,estimate_amount,billing_status,notes
+ERR-2026-0001,C901,架空エラー顧客,本館,590-0901,大阪府南大阪市架空町90-1-1,消防設備点検,staff@table-to-app.example,2026-08-05,2026-08-08,scheduled,52000,quoted,正常
+ERR-2026-0001,C901,架空エラー顧客,本館,590-0901,大阪府南大阪市架空町90-1-1,消防設備点検,staff@table-to-app.example,2026-08-05,2026-08-08,scheduled,52000,quoted,案件番号重複
+,C902,架空エラー顧客2,別館,590-0902,大阪府南大阪市架空町90-2-1,空調設備点検,staff@table-to-app.example,2026-08-05,2026-08-08,scheduled,52000,quoted,案件番号なし
+ERR-2026-0003,C903,,別館,590-0903,大阪府南大阪市架空町90-3-1,空調設備点検,staff@table-to-app.example,2026-08-05,2026-08-08,scheduled,52000,quoted,顧客名なし
+ERR-2026-0004,C904,架空エラー顧客4,別館,590-0904,大阪府南大阪市架空町90-4-1,空調設備点検,missing@table-to-app.example,2026-08-05,2026-08-08,scheduled,52000,quoted,未登録担当者
+ERR-2026-0005,C905,架空エラー顧客5,別館,590-0905,大阪府南大阪市架空町90-5-1,空調設備点検,staff@table-to-app.example,2026/08/05,2026-08-08,scheduled,52000,quoted,不正日付
+ERR-2026-0006,C906,架空エラー顧客6,別館,590-0906,大阪府南大阪市架空町90-6-1,空調設備点検,staff@table-to-app.example,2026-08-10,2026-08-08,scheduled,52000,quoted,期限逆転
+ERR-2026-0007,C907,架空エラー顧客7,別館,590-0907,大阪府南大阪市架空町90-7-1,空調設備点検,staff@table-to-app.example,2026-08-05,2026-08-08,waiting,52000,quoted,不正status
+ERR-2026-0008,C908,架空エラー顧客8,別館,590-0908,大阪府南大阪市架空町90-8-1,空調設備点検,staff@table-to-app.example,2026-08-05,2026-08-08,scheduled,-100,quoted,負の金額
+ERR-2026-0009,C909,架空エラー顧客9,別館,590-0909,大阪府南大阪市架空町90-9-1,空調設備点検,staff@table-to-app.example,2026-08-05,2026-08-08,scheduled,52000,sent,不正billing_status
+CSV-2026-0001,C910,架空エラー顧客10,別館,590-0910,大阪府南大阪市架空町90-10-1,空調設備点検,staff@table-to-app.example,2026-08-05,2026-08-08,scheduled,52000,quoted,DB内案件番号重複

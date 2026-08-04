@@ -1,0 +1,22 @@
+# ポートフォリオ掲載用ファクト
+
+- Next.js App Router 16.3.0で実装
+- React 19.2.8 / TypeScript 6.0.3 / Tailwind CSS 4.3.3
+- TypeScript strict有効
+- Supabase Authを前提にしたログイン
+- PostgreSQLマイグレーション1本で7テーブルを定義
+- 全アプリケーションテーブルでRLS有効
+- admin / staff / viewer の3権限
+- staffはRLSにより自分担当案件だけをSELECT可能
+- viewerは全案件を閲覧できるが登録・編集不可
+- 案件番号はDBのunique制約で重複防止
+- 日付整合と金額非負制約あり
+- 案件作成・更新履歴はDBトリガーで記録
+- CSV移行ウィザードにZustandを使用
+- CSV正常サンプル20行、異常サンプル11行
+- CSV取込は正常行のみ登録し、不正行はエラーとして記録
+- CSV出力にCSVインジェクション対策あり
+- lint、typecheck、unit/db test 20件、integration test 1件、Playwright E2E 10件、build成功
+- PC、タブレット、スマートフォン幅の画面監査をPlaywrightで確認
+- GitHub URL、公開デモURL、Supabase本番、Vercel公開は未実施
+- 模擬納品であり実顧客実績ではない
