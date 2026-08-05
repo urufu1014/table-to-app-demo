@@ -7,8 +7,8 @@ import { parseCsv } from "../../lib/csv.ts";
 import { commitCsvImportRows, previewCsvImportRows } from "../../lib/server/csv-import.ts";
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const adminKey = process.env.SUPABASE_SECRET_KEY ?? process.env.SUPABASE_SERVICE_ROLE_KEY;
 const demoPassword = process.env.DEMO_PASSWORD;
 
 function requireEnv(name: string, value: string | undefined) {
@@ -16,12 +16,41 @@ function requireEnv(name: string, value: string | undefined) {
   return value;
 }
 
-const requiredUrl = requireEnv("NEXT_PUBLIC_SUPABASE_URL", url);
-const requiredAnonKey = requireEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY", anonKey);
-const requiredServiceRoleKey = requireEnv("SUPABASE_SERVICE_ROLE_KEY", serviceRoleKey);
-const requiredDemoPassword = requireEnv("DEMO_PASSWORD", demoPassword);
+function isLocalSupabaseUrl(value: string) {
+  const hostname = new URL(value).hostname;
+  return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1";
+}
 
-const service = createClient(requiredUrl, requiredServiceRoleKey, { auth: { persistSession: false } });
+function getSupabaseProjectRef(value: string) {
+  const hostname = new URL(value).hostname;
+  if (!hostname.endsWith(".supabase.co")) return null;
+  const parts = hostname.split(".");
+  return parts[0] === "db" ? parts[1] : parts[0];
+}
+
+function assertRemoteTestAllowed(value: string) {
+  if (isLocalSupabaseUrl(value)) return;
+
+  assert.equal(process.env.ALLOW_REMOTE_TESTS, "true", "ALLOW_REMOTE_TESTS=true is required for remote integration tests");
+  assert.equal(
+    process.env.REMOTE_TEST_PROJECT_REF,
+    "ecophxoxdnppzysccbrz",
+    "REMOTE_TEST_PROJECT_REF must match the approved production demo project"
+  );
+  assert.equal(
+    getSupabaseProjectRef(value),
+    process.env.REMOTE_TEST_PROJECT_REF,
+    "Supabase URL project ref must match REMOTE_TEST_PROJECT_REF"
+  );
+}
+
+const requiredUrl = requireEnv("NEXT_PUBLIC_SUPABASE_URL", url);
+const requiredPublishableKey = requireEnv("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY or NEXT_PUBLIC_SUPABASE_ANON_KEY", publishableKey);
+const requiredAdminKey = requireEnv("SUPABASE_SECRET_KEY or SUPABASE_SERVICE_ROLE_KEY", adminKey);
+const requiredDemoPassword = requireEnv("DEMO_PASSWORD", demoPassword);
+assertRemoteTestAllowed(requiredUrl);
+
+const service = createClient(requiredUrl, requiredAdminKey, { auth: { persistSession: false } });
 
 type ProfileRow = {
   id: string;
@@ -44,7 +73,7 @@ type JobRow = {
 };
 
 async function login(email: string) {
-  const client = createClient(requiredUrl, requiredAnonKey, { auth: { persistSession: false } });
+  const client = createClient(requiredUrl, requiredPublishableKey, { auth: { persistSession: false } });
   const { data, error } = await client.auth.signInWithPassword({ email, password: requiredDemoPassword });
   assert.equal(error, null, `${email} should log in`);
   assert.ok(data.user, `${email} should return an auth user`);
@@ -88,6 +117,7 @@ async function cleanupTestRows() {
 describe("real Supabase Auth, RLS, history, and CSV import", () => {
   it("verifies role permissions, constraints, history, and CSV import against the local DB", async () => {
     await cleanupTestRows();
+    try {
     const profiles = await getProfiles();
     assert.equal(profiles.admin.is_active, true);
     assert.equal(profiles.staff.is_active, true);
@@ -100,7 +130,7 @@ describe("real Supabase Auth, RLS, history, and CSV import", () => {
     assert.equal(staffSession.userId, profiles.staff.id);
     assert.equal(viewerSession.userId, profiles.viewer.id);
 
-    const anon = createClient(requiredUrl, requiredAnonKey, { auth: { persistSession: false } });
+    const anon = createClient(requiredUrl, requiredPublishableKey, { auth: { persistSession: false } });
     const { data: anonJobs, error: anonSelectError } = await anon.from("inspection_jobs").select("id");
     assert.equal(anonSelectError, null);
     assert.equal(anonJobs?.length ?? 0, 0);
@@ -410,5 +440,8 @@ describe("real Supabase Auth, RLS, history, and CSV import", () => {
       .select("*", { count: "exact", head: true })
       .in("job_no", ["ERR-2026-0003", "ERR-2026-0004", "ERR-2026-0005", "ERR-2026-0006", "ERR-2026-0007", "ERR-2026-0008", "ERR-2026-0009"]);
     assert.equal(invalidInsertedCount, 0);
+    } finally {
+      await cleanupTestRows();
+    }
   });
 });

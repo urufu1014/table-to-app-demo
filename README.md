@@ -73,7 +73,9 @@ npm run dev
 `.env.example` をコピーして、ローカル環境の値を設定します。
 
 - `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `SUPABASE_SECRET_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `DEMO_ADMIN_EMAIL`
 - `DEMO_STAFF_EMAIL`
@@ -81,8 +83,10 @@ npm run dev
 - `DEMO_PASSWORD`
 - `NEXT_PUBLIC_DEMO_PASSWORD`
 - `NEXT_PUBLIC_DEMO_NOTE`
+- `ALLOW_REMOTE_TESTS`
+- `REMOTE_TEST_PROJECT_REF`
 
-`SUPABASE_SERVICE_ROLE_KEY` はサーバー側処理、シード、検証用途だけで使い、ブラウザへ渡しません。
+本番環境では `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` と `SUPABASE_SECRET_KEY` を優先します。ローカルSupabaseでは互換用に `NEXT_PUBLIC_SUPABASE_ANON_KEY` と `SUPABASE_SERVICE_ROLE_KEY` も使用できます。`SUPABASE_SECRET_KEY` と `SUPABASE_SERVICE_ROLE_KEY` はRLSを回避するため、サーバー側処理、シード、検証用途だけで使い、ブラウザへ渡しません。`.env.remote.local` は本番デモ検証用のローカルファイルで、Git管理しません。実キーはREADMEやGitへ記載しません。
 
 ## デモアカウント
 
@@ -146,7 +150,7 @@ npm run build
 `npm run test:integration` はローカルSupabaseを起動し、必要な環境変数をプロセスへ渡して実行します。
 
 ```bash
-NEXT_PUBLIC_SUPABASE_URL=... NEXT_PUBLIC_SUPABASE_ANON_KEY=... SUPABASE_SERVICE_ROLE_KEY=... DEMO_PASSWORD=... npm run test:integration
+NEXT_PUBLIC_SUPABASE_URL=... NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=... SUPABASE_SECRET_KEY=... DEMO_PASSWORD=... npm run test:integration
 ```
 
 `RUN_REAL_E2E=1 npm run test:e2e` は開発サーバーとローカルSupabaseを起動した状態で実行します。モックE2Eはログイン画面の失敗表示を確認し、実Auth/DB E2Eはadmin / staff / viewer の認証後導線、権限差、画面崩れ、主要画面のレスポンシブを確認します。
@@ -173,7 +177,9 @@ NEXT_PUBLIC_SUPABASE_URL=... NEXT_PUBLIC_SUPABASE_ANON_KEY=... SUPABASE_SERVICE_
 Vercel公開は未実施です。公開時は、Supabase本番プロジェクトを構築し、Vercelに必要な環境変数を設定します。
 
 - `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `SUPABASE_SECRET_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `DEMO_PASSWORD`
 - `NEXT_PUBLIC_DEMO_PASSWORD`
@@ -182,7 +188,7 @@ Vercel公開は未実施です。公開時は、Supabase本番プロジェクト
 
 ## セキュリティ
 
-- service role keyはクライアントへ渡しません
+- `SUPABASE_SECRET_KEY` / `SUPABASE_SERVICE_ROLE_KEY` はクライアントへ渡しません
 - RLSはSQLマイグレーションで有効化しています
 - CSV出力ではCSVインジェクション対策を行います
 - `.env` はGit管理対象外です

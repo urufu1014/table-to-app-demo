@@ -10,13 +10,16 @@ staffについては、自分担当案件はSELECTでき、他人担当案件は
 
 `.env`、service role key、デモパスワードはコミットしない。`.env.example` にはプレースホルダだけを置く。
 
-- `SUPABASE_SERVICE_ROLE_KEY` はサーバー側、シード、検証用途に限定し、ブラウザへ渡さない
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY` はブラウザから参照される公開可能キーであり、RLSを前提に利用する
+- 本番環境では `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` と `SUPABASE_SECRET_KEY` を優先する
+- ローカルSupabase互換用に `NEXT_PUBLIC_SUPABASE_ANON_KEY` と `SUPABASE_SERVICE_ROLE_KEY` も使用できる
+- `SUPABASE_SECRET_KEY` / `SUPABASE_SERVICE_ROLE_KEY` はRLSを回避するため、サーバー側、シード、検証用途に限定し、ブラウザへ渡さない
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` / `NEXT_PUBLIC_SUPABASE_ANON_KEY` はブラウザから参照される公開可能キーであり、RLSを前提に利用する
+- `.env.remote.local` は本番デモ検証用のローカルファイルであり、Git管理しない
 - `NEXT_PUBLIC_DEMO_PASSWORD` は公開デモ専用の資格情報としてのみ使用する
 - `NEXT_PUBLIC_DEMO_PASSWORD` は顧客環境や本番管理者パスワードには使用しない
 - `NEXT_PUBLIC_` で始まるため、`NEXT_PUBLIC_DEMO_PASSWORD` は秘密情報として保護される値ではない
 
-実際のパスワード値、service role key、JWTはREADME、docs、Git管理ファイルへ記載しない。
+実際のパスワード値、secret key、service role key、JWTはREADME、docs、Git管理ファイルへ記載しない。
 
 ## デモデータ
 

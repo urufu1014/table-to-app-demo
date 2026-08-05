@@ -1,15 +1,21 @@
 import { createClient } from "@supabase/supabase-js";
 
-const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "http://127.0.0.1:54321";
-const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const adminKey = process.env.SUPABASE_SECRET_KEY ?? process.env.SUPABASE_SERVICE_ROLE_KEY;
 const demoPassword = process.env.DEMO_PASSWORD;
 
-if (!serviceRoleKey || !demoPassword) {
-  console.error("SUPABASE_SERVICE_ROLE_KEY and DEMO_PASSWORD are required.");
+const missing = [
+  ["NEXT_PUBLIC_SUPABASE_URL", url],
+  ["SUPABASE_SECRET_KEY or SUPABASE_SERVICE_ROLE_KEY", adminKey],
+  ["DEMO_PASSWORD", demoPassword]
+].filter(([, value]) => !value);
+
+if (missing.length > 0) {
+  console.error(`${missing.map(([name]) => name).join(", ")} are required.`);
   process.exit(1);
 }
 
-const supabase = createClient(url, serviceRoleKey, { auth: { persistSession: false } });
+const supabase = createClient(url, adminKey, { auth: { persistSession: false } });
 
 const demoUsers = [
   { email: "admin@table-to-app.example", full_name: "山本 管理", role: "admin" },

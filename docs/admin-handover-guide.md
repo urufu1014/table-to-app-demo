@@ -30,13 +30,17 @@ DEMO_PASSWORD=任意のローカル検証用パスワード SUPABASE_SERVICE_ROL
 
 ## 環境変数
 
-`.env.example` を参照し、Supabase URL、anon key、service role key、デモパスワードを設定する。
+`.env.example` を参照し、Supabase URL、公開可能キー、サーバー限定キー、デモパスワードを設定する。本番では publishable / secret を優先し、ローカルSupabaseでは anon / service_role も互換用に利用できる。
 
 - `NEXT_PUBLIC_SUPABASE_URL`: ブラウザから参照されるSupabase URL
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY`: ブラウザから参照されるanon key。RLS前提で使う公開可能キー
-- `SUPABASE_SERVICE_ROLE_KEY`: サーバー側、シード、検証用途のみ。ブラウザへ渡さない
+- `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`: 本番で優先する公開可能キー。RLS前提で使う
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`: ローカル互換用の公開可能キー
+- `SUPABASE_SECRET_KEY`: 本番で優先するサーバー限定キー。RLSを回避するためブラウザへ渡さない
+- `SUPABASE_SERVICE_ROLE_KEY`: ローカル互換用のサーバー限定キー。ブラウザへ渡さない
 - `DEMO_PASSWORD`: シードと実DB検証用のデモパスワード
 - `NEXT_PUBLIC_DEMO_PASSWORD`: ログイン画面で自動入力する公開デモ専用パスワード
+- `ALLOW_REMOTE_TESTS`: リモートSupabase統合テストを明示許可するフラグ
+- `REMOTE_TEST_PROJECT_REF`: リモート誤実行防止用のproject ref
 
 `NEXT_PUBLIC_DEMO_PASSWORD` は秘密情報ではない。顧客環境や本番管理者パスワードには使用しない。
 
@@ -47,7 +51,7 @@ DEMO_PASSWORD=任意のローカル検証用パスワード SUPABASE_SERVICE_ROL
 - Supabase本番プロジェクトは未構築
 - Vercel公開は未実施
 
-公開する場合は、Supabase本番プロジェクトを先に構築し、Vercelへ本番用環境変数を設定する。公開後にREADMEへURLを追記する。
+公開する場合は、Supabase本番プロジェクトを先に構築し、Vercelへ本番用環境変数を設定する。`.env.remote.local` は本番デモ検証用のローカルファイルで、Git管理しない。実キーはREADMEやGitへ記載しない。公開後にREADMEへURLを追記する。
 
 ## 障害時の確認順
 
@@ -65,7 +69,7 @@ DEMO_PASSWORD=任意のローカル検証用パスワード SUPABASE_SERVICE_ROL
 npm run lint
 npm run typecheck
 npm run test
-NEXT_PUBLIC_SUPABASE_URL=... NEXT_PUBLIC_SUPABASE_ANON_KEY=... SUPABASE_SERVICE_ROLE_KEY=... DEMO_PASSWORD=... npm run test:integration
+NEXT_PUBLIC_SUPABASE_URL=... NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=... SUPABASE_SECRET_KEY=... DEMO_PASSWORD=... npm run test:integration
 RUN_REAL_E2E=1 DEMO_PASSWORD=... NEXT_PUBLIC_DEMO_PASSWORD=... npm run test:e2e
 npm run build
 ```
