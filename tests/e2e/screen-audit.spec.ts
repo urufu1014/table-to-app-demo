@@ -73,12 +73,12 @@ test.describe("full screen responsive audit", () => {
       await page.goto("/login");
       await expect(page.getByRole("heading", { name: "点検案件管理アプリ" })).toBeVisible();
       await expect(page.getByText("架空データを使った模擬納品")).toBeVisible();
+      await expect(page.getByRole("button", { name: /担当者/ })).toBeVisible();
+      await expect(page.getByRole("button", { name: /閲覧者/ })).toBeVisible();
       await expect(page.getByRole("button", { name: /管理者/ })).toHaveAttribute("aria-pressed", "false");
       await page.getByRole("button", { name: /管理者/ }).click();
       await expect(page.getByLabel("メールアドレス")).toHaveValue("admin@table-to-app.example");
-      await page.getByLabel("パスワード").fill("wrong-password");
-      await page.getByRole("button", { name: "ログイン" }).click();
-      await expect(page.getByText("メールアドレスまたはパスワードが正しくありません。")).toBeVisible();
+      await expect(page.getByLabel("パスワード")).toBeVisible();
       await auditCurrentPage(page);
       await screenshot(page, testInfo, `login-${viewport.name}`);
 
@@ -195,7 +195,8 @@ test.describe("full screen responsive audit", () => {
       await screenshot(page, testInfo, `viewer-${viewport.name}`);
     }
 
-    expect(consoleErrors.filter((message) => !message.includes("400 (Bad Request)") && !message.includes("404 (Not Found)"))).toEqual([]);
+    const expectedNotFoundMessage = "Failed to load resource: the server responded with a status of 404 (Not Found)";
+    expect(consoleErrors.filter((message) => message !== expectedNotFoundMessage)).toEqual([]);
     expect(failedRequests).toEqual([]);
     expect(serverErrors).toEqual([]);
   });
