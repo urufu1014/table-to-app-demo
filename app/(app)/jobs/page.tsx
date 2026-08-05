@@ -3,7 +3,8 @@ import { Download, Plus, Search } from "lucide-react";
 import { requireProfile } from "@/lib/auth";
 import { billingStatusLabels, statusLabels } from "@/lib/constants";
 import { getDueStatus } from "@/lib/date-status";
-import type { BillingStatus, JobStatus, JobWithRelations, Profile } from "@/lib/types";
+import { fetchInspectionJobs } from "@/lib/server/job-query";
+import type { BillingStatus, JobStatus, Profile } from "@/lib/types";
 import { formatDate } from "@/lib/utils";
 import { DueBadge } from "@/components/due-badge";
 import { EmptyState, LinkButton } from "@/components/ui";
@@ -28,30 +29,13 @@ export default async function JobsPage({ searchParams }: { searchParams: Promise
   const from = (page - 1) * pageSize;
   const to = from + pageSize - 1;
 
-  let query = supabase
-    .from("inspection_jobs")
-    .select(
-      "*, customers(*), sites(*), assignee:profiles!inspection_jobs_assignee_id_fkey(id, full_name, email)",
-      { count: "exact" }
-    )
-    .order("report_due_date", { ascending: true });
-
-  if (params.q) {
-    query = query.or(`job_no.ilike.%${params.q}%,inspection_type.ilike.%${params.q}%,notes.ilike.%${params.q}%`);
-  }
-  if (params.assignee) query = query.eq("assignee_id", params.assignee);
-  if (params.status) query = query.eq("status", params.status);
-  if (params.billing) query = query.eq("billing_status", params.billing);
-
-  const { data, count } = await query.range(from, to);
-  const jobs = (data ?? []) as unknown as JobWithRelations[];
+  const { jobs, count } = await fetchInspectionJobs(supabase, params, { from, to });
 
   const { data: allVisibleJobs } = await supabase
     .from("inspection_jobs")
     .select("id, report_due_date, status")
     .returns<Array<{ id: string; report_due_date: string; status: JobStatus }>>();
   const metricsSource = allVisibleJobs ?? [];
-  const filteredByDue = params.due ? jobs.filter((job) => getDueStatus(job.report_due_date, job.status) === params.due) : jobs;
   const totalPages = Math.max(1, Math.ceil((count ?? 0) / pageSize));
 
   const { data: assignees } = await supabase
@@ -153,7 +137,7 @@ export default async function JobsPage({ searchParams }: { searchParams: Promise
         </button>
       </form>
 
-      {filteredByDue.length === 0 ? (
+      {jobs.length === 0 ? (
         <EmptyState title="該当する案件がありません" body="検索条件を変更するか、新規登録してください。" />
       ) : (
         <div className="overflow-hidden rounded-md border border-[var(--line)] bg-white">
@@ -174,7 +158,7 @@ export default async function JobsPage({ searchParams }: { searchParams: Promise
                 </tr>
               </thead>
               <tbody>
-                {filteredByDue.map((job) => (
+                {jobs.map((job) => (
                   <tr key={job.id} className="border-t border-[var(--line)] align-top hover:bg-slate-50">
                     <td className="px-3 py-3 font-semibold">
                       <Link className="underline decoration-slate-300 underline-offset-4" href={`/jobs/${job.id}`}>

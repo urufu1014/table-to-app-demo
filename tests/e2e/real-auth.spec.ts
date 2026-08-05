@@ -23,6 +23,15 @@ test.describe("real Supabase authenticated routes", () => {
     await expect(page.getByRole("link", { name: "利用者", exact: true })).toBeVisible();
     await expect(page.getByRole("link", { name: "新規登録" })).toBeVisible();
 
+    await page.goto("/jobs?q=堺中央ビル管理");
+    await expect(page.locator("tbody tr")).toHaveCount(6);
+    await expect(page.locator("tbody tr").first()).toContainText("堺中央ビル管理");
+    const csvResponse = await page.request.get("/api/jobs/export?q=%E5%A0%BA%E4%B8%AD%E5%A4%AE%E3%83%93%E3%83%AB%E7%AE%A1%E7%90%86");
+    expect(csvResponse.ok()).toBe(true);
+    const csv = await csvResponse.text();
+    expect(csv).toContain("堺中央ビル管理");
+    expect(csv.trim().split("\n")).toHaveLength(7);
+
     await page.goto("/csv-import");
     await expect(page.getByRole("heading", { name: "CSV移行" })).toBeVisible();
 

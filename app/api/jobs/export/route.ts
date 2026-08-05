@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { requireProfile } from "@/lib/auth";
 import { billingStatusLabels, statusLabels } from "@/lib/constants";
 import { toCsv } from "@/lib/csv";
+import { fetchInspectionJobs } from "@/lib/server/job-query";
 
 type ExportJob = {
   job_no: string;
@@ -21,23 +22,19 @@ export async function GET(request: Request) {
   const { supabase } = await requireProfile();
   const { searchParams } = new URL(request.url);
 
-  let query = supabase
-    .from("inspection_jobs")
-    .select("*, customers(name, customer_code), sites(name, postal_code, address), assignee:profiles!inspection_jobs_assignee_id_fkey(full_name, email)")
-    .order("job_no");
-
-  const q = searchParams.get("q");
-  if (q) query = query.or(`job_no.ilike.%${q}%,inspection_type.ilike.%${q}%,notes.ilike.%${q}%`);
-  const assignee = searchParams.get("assignee");
-  if (assignee) query = query.eq("assignee_id", assignee);
-  const status = searchParams.get("status");
-  if (status) query = query.eq("status", status);
-  const billing = searchParams.get("billing");
-  if (billing) query = query.eq("billing_status", billing);
-
-  const { data } = await query;
+  const { jobs } = await fetchInspectionJobs(
+    supabase,
+    {
+      q: searchParams.get("q"),
+      assignee: searchParams.get("assignee"),
+      status: searchParams.get("status"),
+      due: searchParams.get("due"),
+      billing: searchParams.get("billing")
+    },
+    { orderBy: "job_no" }
+  );
   const csv = toCsv(
-    ((data ?? []) as unknown as ExportJob[]).map((job) => ({
+    (jobs as unknown as ExportJob[]).map((job) => ({
       job_no: job.job_no,
       customer_code: job.customers?.customer_code,
       customer_name: job.customers?.name,

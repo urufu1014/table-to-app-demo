@@ -3,7 +3,8 @@ import { randomUUID } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { describe, it } from "node:test";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import { parseCsv } from "../../lib/csv.ts";
+import { parseCsv, toCsv } from "../../lib/csv.ts";
+import { fetchInspectionJobs } from "../../lib/server/job-query.ts";
 import { commitCsvImportRows, previewCsvImportRows } from "../../lib/server/csv-import.ts";
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -112,9 +113,106 @@ async function cleanupTestRows() {
     "integration-normal-reimport.csv",
     "integration-errors.csv"
   ]);
+
+  const { data: jobs } = await service.from("inspection_jobs").select("site_id").returns<Array<{ site_id: string }>>();
+  const referencedSiteIds = new Set((jobs ?? []).map((job) => job.site_id));
+  const { data: sites } = await service.from("sites").select("id").returns<Array<{ id: string }>>();
+  const unreferencedSiteIds = (sites ?? []).filter((site) => !referencedSiteIds.has(site.id)).map((site) => site.id);
+  if (unreferencedSiteIds.length > 0) await service.from("sites").delete().in("id", unreferencedSiteIds);
+
+  await service.from("customers").upsert(
+    [
+      "堺中央ビル管理",
+      "泉北物流センター",
+      "河内オフィスサービス",
+      "南港テクノ倉庫",
+      "和泉メディカル設備",
+      "松原商業施設管理",
+      "岸和田公共施設サポート",
+      "高石製造所",
+      "羽曳野福祉センター",
+      "狭山教育会館"
+    ].map((name, index) => ({
+      customer_code: `C${String(index + 1).padStart(3, "0")}`,
+      name
+    })),
+    { onConflict: "customer_code" }
+  );
+  await service.from("customers").delete().eq("customer_code", "C901");
 }
 
 describe("real Supabase Auth, RLS, history, and CSV import", () => {
+  it("searches jobs by related customer, site, assignee, and job fields with accurate counts", async () => {
+    const profiles = await getProfiles();
+    const adminSession = await login("admin@table-to-app.example");
+    const staffSession = await login("staff@table-to-app.example");
+
+    const cases = [
+      { label: "customer name", q: "堺中央ビル管理", count: 6 },
+      { label: "customer code", q: "C001", count: 6 },
+      { label: "site name", q: "堺中央ビル管理 第1点検現場", count: 3 },
+      { label: "site address", q: "架空町1-1", count: 3 },
+      { label: "job number", q: "MDS-2026-0001", count: 1 },
+      { label: "inspection type", q: "消防設備点検", count: 13 },
+      { label: "assignee name", q: "田中 担当", count: 33 },
+      { label: "notes", q: "長めの備考確認用", count: 6 },
+      { label: "missing keyword", q: "__NO_MATCH__", count: 0 },
+      { label: "Japanese partial match", q: "中央ビル", count: 6 }
+    ];
+
+    for (const item of cases) {
+      const { jobs, count } = await fetchInspectionJobs(adminSession.client, { q: item.q });
+      assert.equal(count, item.count, `${item.label} count`);
+      assert.equal(jobs.length, item.count, `${item.label} rows`);
+    }
+
+    const trimmed = await fetchInspectionJobs(adminSession.client, { q: "  堺中央ビル管理  " });
+    assert.equal(trimmed.count, 6);
+
+    const specialCharacters = await fetchInspectionJobs(adminSession.client, { q: "堺中央ビル管理 %" });
+    assert.equal(specialCharacters.count, 0);
+
+    const filtered = await fetchInspectionJobs(adminSession.client, { q: "堺中央ビル管理", status: "scheduled" });
+    assert.equal(filtered.count, 1);
+    assert.equal(filtered.jobs.every((job) => job.status === "scheduled"), true);
+
+    const paged = await fetchInspectionJobs(adminSession.client, { q: "堺中央ビル管理" }, { from: 0, to: 1 });
+    assert.equal(paged.count, 6);
+    assert.equal(paged.jobs.length, 2);
+
+    const staffSearch = await fetchInspectionJobs(staffSession.client, { q: "堺中央ビル管理" });
+    assert.equal(staffSearch.count, 4);
+    assert.equal(staffSearch.jobs.every((job) => job.assignee_id === profiles.staff.id), true);
+
+    const staffAdminAssigneeSearch = await fetchInspectionJobs(staffSession.client, { q: "山本 管理" });
+    assert.equal(staffAdminAssigneeSearch.count, 0);
+    assert.equal(staffAdminAssigneeSearch.jobs.length, 0);
+
+    const screenSearch = await fetchInspectionJobs(adminSession.client, { q: "堺中央ビル管理" }, { from: 0, to: 11 });
+    const exportSearch = await fetchInspectionJobs(adminSession.client, { q: "堺中央ビル管理" }, { orderBy: "job_no" });
+    assert.equal(screenSearch.count, exportSearch.count);
+    assert.deepEqual(
+      new Set(screenSearch.jobs.map((job) => job.id)),
+      new Set(exportSearch.jobs.map((job) => job.id))
+    );
+
+    const csv = toCsv(
+      exportSearch.jobs.map((job) => ({
+        job_no: job.job_no,
+        customer_code: job.customers?.customer_code,
+        customer_name: job.customers?.name,
+        site_name: job.sites?.name,
+        postal_code: job.sites?.postal_code,
+        address: job.sites?.address,
+        inspection_type: job.inspection_type,
+        assignee_email: job.assignee?.email,
+        assignee_name: job.assignee?.full_name,
+        notes: job.notes
+      }))
+    );
+    assert.equal(parseCsv(csv).data.length, 6);
+  });
+
   it("verifies role permissions, constraints, history, and CSV import against the local DB", async () => {
     await cleanupTestRows();
     try {
