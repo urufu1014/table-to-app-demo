@@ -4,19 +4,27 @@
 - React 19.2.8 / TypeScript 6.0.3 / Tailwind CSS 4.3.3
 - TypeScript strict有効
 - Supabase Authを前提にしたログイン
+- GitHub公開済み: https://github.com/urufu1014/table-to-app-demo
+- Supabase本番構築済み
+- Vercel本番公開済み: https://table-to-app-demo.vercel.app/
+- admin / staff / viewerの本番ログイン確認済み
 - PostgreSQLマイグレーション1本で7テーブルを定義
 - 全アプリケーションテーブルでRLS有効
 - admin / staff / viewer の3権限
 - staffはRLSにより自分担当案件だけをSELECT可能
 - viewerは全案件を閲覧できるが登録・編集不可
+- 本番RLS検証済み
 - 案件番号はDBのunique制約で重複防止
 - 日付整合と金額非負制約あり
 - 案件作成・更新履歴はDBトリガーで記録
+- 顧客名、顧客コード、現場、住所、担当者等のDB検索実装済み
+- 画面検索とCSV出力の検索条件が一致
 - CSV移行ウィザードにZustandを使用
 - CSV正常サンプル20行、異常サンプル11行
 - CSV取込は正常行のみ登録し、不正行はエラーとして記録
 - CSV出力にCSVインジェクション対策あり
-- lint、typecheck、unit/db test 20件、integration test 1件、Playwright E2E 10件、build成功
+- lint、typecheck、unit/db test 20件、integration test 2件、Playwright 本番E2E 10件、build成功
 - PC、タブレット、スマートフォン幅の画面監査をPlaywrightで確認
-- GitHub URL、公開デモURL、Supabase本番、Vercel公開は未実施
+- GitHub Actions成功
+- 本番架空案件50件
 - 模擬納品であり実顧客実績ではない
